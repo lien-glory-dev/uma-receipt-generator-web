@@ -11,8 +11,5 @@ pub async fn not_found(request: HttpRequest) -> impl Responder {
 }
 
 pub fn receipts(cfg: &mut web::ServiceConfig) {
-    cfg.service(
-        web::scope("/receipts")
-            .service(controller::receipt::insert)
-    );
+    cfg.service(web::scope("/receipts").service(controller::receipt::insert));
 }

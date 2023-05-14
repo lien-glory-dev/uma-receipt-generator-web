@@ -1,10 +1,10 @@
-use actix_web::{error, HttpResponse, ResponseError};
 use actix_web::body::BoxBody;
 use actix_web::http::StatusCode;
-use derive_more::{Display};
+use actix_web::{HttpResponse, ResponseError};
+use derive_more::Display;
 use log::error;
-use thiserror::Error;
 use serde::Serialize;
+use thiserror::Error;
 
 #[derive(Debug, Display, Error, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -12,9 +12,6 @@ use serde::Serialize;
 pub enum ApiError {
     EndpointNotFound {
         path: String,
-    },
-    ResourceNotFound {
-        id: String,
     },
     #[display(fmt = "Invalid Parameter: {}", message)]
     InvalidParameter {
@@ -26,7 +23,7 @@ pub enum ApiError {
     IoError {
         #[serde(skip)]
         #[from]
-        source: std::io::Error
+        source: std::io::Error,
     },
     ImageUploadError {
         message: String,
@@ -37,8 +34,8 @@ pub enum ApiError {
     ImageProcessFailed {
         #[serde(skip)]
         #[from]
-        source: uma_details_utility::image::Error
-    }
+        source: uma_details_utility::image::Error,
+    },
 }
 
 #[derive(Debug, Display, Serialize)]
@@ -49,9 +46,7 @@ struct ApiErrorContainer<'a> {
 impl ResponseError for ApiError {
     fn status_code(&self) -> StatusCode {
         match self {
-            ApiError::EndpointNotFound { .. } | ApiError::ResourceNotFound { .. } => {
-                StatusCode::NOT_FOUND
-            }
+            ApiError::EndpointNotFound { .. } => StatusCode::NOT_FOUND,
             ApiError::InvalidParameter { .. } => StatusCode::BAD_REQUEST,
             ApiError::IoError { .. } => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::ImageUploadError { .. } => StatusCode::INTERNAL_SERVER_ERROR,
@@ -59,7 +54,7 @@ impl ResponseError for ApiError {
             ApiError::ImageProcessFailed { .. } => StatusCode::BAD_REQUEST,
         }
     }
-    
+
     fn error_response(&self) -> HttpResponse<BoxBody> {
         error!("Responded error: {:?}", self);
         HttpResponse::build(self.status_code()).json(ApiErrorContainer { error: self })

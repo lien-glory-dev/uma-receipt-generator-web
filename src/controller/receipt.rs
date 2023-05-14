@@ -97,7 +97,7 @@ pub async fn insert(
         image
             .file
             .persist(file_path.as_str())
-            .map_err(|e| ApiError::ImageUploadError {
+            .map_err(|_| ApiError::ImageUploadError {
                 message: "Failed to upload image".to_string(),
             })?;
         info!("Image uploaded to {:?}", file_path);

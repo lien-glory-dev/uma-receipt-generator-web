@@ -41,14 +41,6 @@ async fn actix_web(
             actix_multipart::form::tempfile::TempFileConfig::default()
                 .directory(TEMP_UPLOAD_DIRECTORY),
         )
-        .app_data(
-            actix_multipart::form::text::TextConfig::default().error_handler(|err, _req| {
-                actix_web::Error::from(ApiError::InvalidParameter {
-                    message: err.to_string().split(':').collect::<Vec<&str>>()[0].to_string(),
-                    sensitive_message: Some(err.to_string()),
-                })
-            }),
-        )
         .default_service(web::route().to(route::not_found))
         .configure(route::receipts);
     };
