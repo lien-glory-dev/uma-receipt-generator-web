@@ -1,0 +1,25 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: #222;
+  font-size: 1.5rem;
+}
+
+main {
+  color: #ccc;
+  font-family: sans-serif;
+
+  margin: 1rem 2rem;
+}
+
+main a:link {
+  color: #919fff;
+}
+
+main a:visited {
+  color: #a27afd;
+}

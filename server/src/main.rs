@@ -1,3 +1,4 @@
+use actix_files::Files;
 use actix_web::{web, HttpRequest};
 use shuttle_actix_web::ShuttleActixWeb;
 
@@ -41,8 +42,9 @@ async fn actix_web(
             actix_multipart::form::tempfile::TempFileConfig::default()
                 .directory(TEMP_UPLOAD_DIRECTORY),
         )
-        .default_service(web::route().to(route::not_found))
-        .configure(route::receipts);
+        .configure(route::receipts)
+        .service(Files::new("/", "./dist/").index_file("index.html"))
+        .default_service(web::route().to(route::not_found));
     };
 
     Ok(config.into())
