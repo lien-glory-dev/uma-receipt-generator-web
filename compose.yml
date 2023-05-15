@@ -1,0 +1,37 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server.dockerfile
+      target: 'development'
+    command: /bin/sh -c "cargo watch -w server -w uma-details-utility -w Cargo.toml --poll -x 'run --package server --color=always'"
+    volumes:
+      - .:/app
+      - ws-cargo:/usr/local/cargo/registry
+      - ws-target:/app/target
+      - server-target:/app/server/target
+      - front-target:/app/front/target
+    ports:
+      - "8080:80"
+    environment:
+      RUST_LOG: 'debug'
+      TZ: 'Asia/Tokyo'
+
+  front-builder:
+    build:
+      context: .
+      dockerfile: front-builder.dockerfile
+      target: 'development'
+    command: /bin/sh -c "cd /app/front && cargo watch -w ./ --poll -s 'trunk build'"
+    volumes:
+      - ./front:/app/front
+      - ./dist:/app/dist
+      - ws-cargo:/usr/local/cargo/registry
+      - ws-target:/app/target
+      - front-target:/app/front/target
+
+volumes:
+  ws-cargo:
+  ws-target:
+  server-target:
+  front-target:

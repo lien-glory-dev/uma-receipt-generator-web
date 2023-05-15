@@ -19,11 +19,14 @@ impl Component for Home {
             <div class="container page">
                 <h1>{"因子結合くん"}</h1>
                 <form action="/receipts" method="post" enctype="multipart/form-data">
-                    <input type="checkbox" name="trim_margin" class="form-control" value="1"/>
-                    <input type="checkbox" name="trim_close_button" class="form-control" value="1"/>
-                    <input type="checkbox" name="trim_title" class="form-control" value="1"/>
+                    <input type="checkbox" name="trim_margin" id="trim_margin" class="form-control" value="1"/>
+                    <label for="trim_margin">{"余白を取り除く"}</label>
+                    <input type="checkbox" name="trim_close_button" id="trim_close_button" class="form-control" value="1"/>
+                    <label for="trim_close_button">{"「閉じる」ボタンを取り除く"}</label>
+                    <input type="checkbox" name="trim_title" id="trim_title" class="form-control" value="1"/>
+                    <label for="trim_title">{"「ウマ娘詳細」ヘッダーを取り除く"}</label>
                     <input type="file" multiple=true name="images[]"/>
-                    <button type="submit">{"Submit"}</button>
+                    <button type="submit">{"つなげる"}</button>
                 </form>
             </div>
         }

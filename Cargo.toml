@@ -6,5 +6,5 @@ authors = ["tankream <shuto.tanaka.kos@gmail.com>"]
 publish = false
 
 [workspace]
-members = ["server", "front"]
+members = ["server", "front", "uma-details-utility"]
 default-members = ["server"]

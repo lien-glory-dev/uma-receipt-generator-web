@@ -1,0 +1,3 @@
+[submodule "uma-details-utility"]
+	path = uma-details-utility
+	url = https://github.com/lien-glory-dev/uma-details-utility.git

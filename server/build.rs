@@ -4,8 +4,6 @@ use std::process::Command;
 fn main() {
     std::env::set_var("CARGO_TARGET_DIR", "../front/target");
     
-    println!("cargo:rerun-if-changed=../front");
-    
     Command::new("trunk")
         .arg("build")
         .current_dir("../front")
