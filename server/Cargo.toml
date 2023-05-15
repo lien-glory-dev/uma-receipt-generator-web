@@ -23,4 +23,4 @@ serde_json = "1.0"
 derive_more = "0.99"
 thiserror = "1.0.40"
 actix-web-validator = "5.0"
-uma-details-utility = { path = "../../uma-details-utility" }
+uma-details-utility = { path = "../uma-details-utility" }
