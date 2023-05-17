@@ -32,7 +32,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get -y install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+        sudo apt-get -y install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu clang
 
     - name: Cache OpenCV build
       id: opencv_build_cache
