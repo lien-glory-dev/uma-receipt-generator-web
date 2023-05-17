@@ -58,7 +58,7 @@ jobs:
         echo 'find_program(CMAKE_CXX_COMPILER NAMES aarch64-linux-gnu-g++)' >> ../opencv-4.x/platforms/linux/aarch64-gnu.toolchain.cmake
         
         cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=NO \
-        -DCMAKE_TOOLCHAIN_FILE=../opencv-4.x/platforms/linux/aarch64-gnu.toolchain.cmake
+        -DCMAKE_TOOLCHAIN_FILE=../opencv-4.x/platforms/linux/aarch64-gnu.toolchain.cmake \
         -DCMAKE_INSTALL_PREFIX=/opt/opencv -DBUILD_DOCS=OFF -DBUILD_EXAMPLES=OFF \
         -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_opencv_java=OFF \
         -DBUILD_opencv_python=OFF -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib-4.x/modules \
