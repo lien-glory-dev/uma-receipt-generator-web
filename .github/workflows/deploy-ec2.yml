@@ -36,7 +36,7 @@ jobs:
     - name: Cache apt
       uses: awalsh128/cache-apt-pkgs-action@v1.3.0
       with:
-        packages: libopencv-dev:arm64 libclang-dev:arm64 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+        packages: gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
     
     - name: Cache cargo registry
       uses: actions/cache@v2
