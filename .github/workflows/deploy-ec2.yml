@@ -67,8 +67,8 @@ jobs:
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        role-to-assume: ${{ env.AWS_DEPLOYER_ROLE_ARN }} # 作成したIAMロールのARN
-        role-session-name: github-actions-${{ github.run_id }} # CloudTrailイベントに表示されるユーザー名
+        role-to-assume: ${{ env.AWS_DEPLOYER_ROLE_ARN }}
+        role-session-name: github-actions-${{ github.run_id }}
         aws-region: ap-northeast-1
     
     - name: Deploy to production

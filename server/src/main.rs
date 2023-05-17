@@ -12,7 +12,9 @@ mod route;
 const TEMP_UPLOAD_DIRECTORY: &str = "./images-temp";
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> anyhow::Result<()> {
+    dotenv::dotenv()?;
+
     env_logger::builder()
         .parse_default_env()
         .format(|buf, record| {
@@ -28,6 +30,7 @@ async fn main() -> std::io::Result<()> {
 
     log::info!("Creating temp upload dir");
     std::fs::create_dir_all(TEMP_UPLOAD_DIRECTORY)?;
+    log::info!("Temp upload dir created");
 
     let request_error_handler =
         |err: actix_web_validator::Error, _req: &HttpRequest| -> actix_web::Error {
@@ -40,8 +43,9 @@ async fn main() -> std::io::Result<()> {
             }
         };
 
-    HttpServer::new(move || {
+    Ok(HttpServer::new(move || {
         App::new()
+            .wrap(actix_web::middleware::Logger::default())
             .app_data(
                 actix_web_validator::QueryConfig::default().error_handler(request_error_handler),
             )
@@ -65,7 +69,7 @@ async fn main() -> std::io::Result<()> {
             .default_service(web::route().to(route::not_found))
     })
     .worker_max_blocking_threads(1024)
-    .bind(("0.0.0.0", 80))?
+    .bind(std::env::var("LISTEN_HOST")?)?
     .run()
-    .await
+    .await?)
 }
