@@ -29,14 +29,10 @@ jobs:
         echo 'AWS_EC2_SSH_USER_NAME=${{ secrets.AWS_EC2_SSH_USER_NAME_PROD }}' >> $GITHUB_ENV
         echo 'AWS_EC2_SSH_HOST_NAME=${{ secrets.AWS_EC2_SSH_HOST_NAME_PROD }}' >> $GITHUB_ENV
     
-    - name: Add dpkg foreign architecture
-      run: |
-        sudo dpkg --add-architecture arm64
-    
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get -y install libopencv-dev:arm64 libclang-dev:arm64 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+        sudo apt-get -y install libopencv-dev libclang-dev gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
     
     - name: Cache cargo registry
       uses: actions/cache@v2
