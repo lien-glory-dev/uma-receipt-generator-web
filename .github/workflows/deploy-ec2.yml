@@ -28,7 +28,6 @@ jobs:
         echo 'AWS_EC2_SECURITY_GROUP_ID=${{ secrets.AWS_EC2_SECURITY_GROUP_ID_PROD }}' >> $GITHUB_ENV
         echo 'AWS_EC2_SSH_USER_NAME=${{ secrets.AWS_EC2_SSH_USER_NAME_PROD }}' >> $GITHUB_ENV
         echo 'AWS_EC2_SSH_HOST_NAME=${{ secrets.AWS_EC2_SSH_HOST_NAME_PROD }}' >> $GITHUB_ENV
-        echo 'AWS_EC2_SSH_PRIVATE_KEY=${{ secrets.AWS_EC2_SSH_PRIVATE_KEY_PROD }}' >> $GITHUB_ENV
     
     - name: Add dpkg foreign architecture
       run: |
@@ -82,7 +81,7 @@ jobs:
       run: |
         aws ec2 authorize-security-group-ingress --group-id ${{ env.AWS_EC2_SECURITY_GROUP_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
         
-        echo "${{ env.AWS_EC2_SSH_PRIVATE_KEY }}" > private_key
+        echo "${{ secrets.AWS_EC2_SSH_PRIVATE_KEY_PROD }}" > private_key
         chmod 600 private_key
         
         ssh -oStrictHostKeyChecking=no -i private_key ${{ env.SSH_URI }} "sudo systemctl stop uma-receipt-generator-web.service"
