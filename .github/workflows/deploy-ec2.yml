@@ -33,10 +33,10 @@ jobs:
       run: |
         sudo dpkg --add-architecture arm64
     
-    - name: Cache apt
-      uses: awalsh128/cache-apt-pkgs-action@v1.3.0
-      with:
-        packages: gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install libopencv-dev:arm64 libclang-dev:arm64 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
     
     - name: Cache cargo registry
       uses: actions/cache@v2
