@@ -1,2 +1,0 @@
-[target.aarch64-unknown-linux-gnu]
-pre-build = ["dpkg --add-architecture arm64 && apt-get update && apt-get install -y libopencv-dev:arm64 clang:arm64 libclang-dev:arm64"]
