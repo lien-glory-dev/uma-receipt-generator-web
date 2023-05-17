@@ -1,0 +1,94 @@
+name: Build and Deploy to EC2
+
+on:
+  push:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GIT_SUBMODULE_ACCESS_TOKEN }}
+        submodules: true
+    
+    - name: Configure Environments
+      run: |
+        echo 'AWS_DEPLOYER_ROLE_ARN=${{ secrets.AWS_DEPLOYER_ROLE_ARN_PROD }}' >> $GITHUB_ENV
+        echo 'AWS_EC2_SECURITY_GROUP_ID=${{ secrets.AWS_EC2_SECURITY_GROUP_ID_PROD }}' >> $GITHUB_ENV
+        echo 'AWS_EC2_SSH_USER_NAME=${{ secrets.AWS_EC2_SSH_USER_NAME_PROD }}' >> $GITHUB_ENV
+        echo 'AWS_EC2_SSH_HOST_NAME=${{ secrets.AWS_EC2_SSH_HOST_NAME_PROD }}' >> $GITHUB_ENV
+        echo 'AWS_EC2_SSH_PRIVATE_KEY=${{ secrets.AWS_EC2_SSH_PRIVATE_KEY_PROD }}' >> $GITHUB_ENV
+    
+    - name: Add dpkg foreign architecture
+      run: |
+        sudo dpkg --add-architecture arm64
+    
+    - name: Cache apt
+      uses: awalsh128/cache-apt-pkgs-action@v1.3.0
+      with:
+        packages: libopencv-dev:arm64 libclang-dev:arm64 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+    
+    - name: Cache cargo registry
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        
+    - name: Cache cargo build
+      uses: actions/cache@v2
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+        
+    - name: Cache cargo index
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+        
+    - name: Build server
+      uses: actions-rs/cargo@v1.0.1
+      with:
+        use-cross: true
+        command: build
+        args: --release --target aarch64-unknown-linux-gnu
+    
+    - name: Build front
+      run: |
+        wget -qO- https://github.com/thedodd/trunk/releases/download/v0.16.0/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+        ./trunk build --target ./front/index.html --dist ./dist
+    
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: ${{ env.AWS_DEPLOYER_ROLE_ARN }} # 作成したIAMロールのARN
+        role-session-name: github-actions-${{ github.run_id }} # CloudTrailイベントに表示されるユーザー名
+        aws-region: ap-northeast-1
+    
+    - name: Deploy to production
+      env:
+        SSH_URI: ${{ env.AWS_EC2_SSH_USER_NAME }}@${{ env.AWS_EC2_SSH_HOST_NAME }}
+      run: |
+        aws ec2 authorize-security-group-ingress --group-id ${{ env.AWS_EC2_SECURITY_GROUP_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+        
+        echo "${{ env.AWS_EC2_SSH_PRIVATE_KEY }}" > private_key
+        chmod 600 private_key
+        
+        ssh -oStrictHostKeyChecking=no -i private_key ${{ env.SSH_URI }} "sudo systemctl stop uma-receipt-generator-web.service"
+        scp -i private_key ./target/aarch64-unknown-linux-gnu/release/server ${{ env.SSH_URI }}:/home/admin/uma-receipt-generator-web
+        scp -i private_key -r ./target/aarch64-unknown-linux-gnu/release/dist ${{ env.SSH_URI }}:/home/admin/uma-receipt-generator-web
+        scp -i private_key -r ./.env.example ${{ env.SSH_URI }}:/home/admin/uma-receipt-generator-web/.env
+        ssh -oStrictHostKeyChecking=no -i private_key ${{ env.SSH_URI }} "sudo systemctl start uma-receipt-generator-web.service"
+        
+        aws ec2 revoke-security-group-ingress --group-id ${{ env.AWS_EC2_SECURITY_GROUP_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
