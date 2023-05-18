@@ -33,25 +33,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install crossbuild-essential-arm64
-        sudo apt-get -y install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-
-    - name: Cache clang
-      id: clang_install_cache
-      uses: actions/cache@v2
-      with:
-        path: ./clang
-        key: clang-installation
-
-    - name: Install clang
-      if: steps.clang_install_cache.outputs.cache-hit != 'true'
-      run: |
-        mkdir -p ./clang && cd ./clang
-        wget -O llvm.tar.xz https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.0/clang+llvm-16.0.0-aarch64-linux-gnu.tar.xz
-        xz -dc llvm.tar.xz | tar xfv -
-
-    - name: Copy clang
-      run: |
-        sudo mv ./clang/clang+llvm-16.0.0-aarch64-linux-gnu /usr/local/llvm
+        sudo apt-get -y install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu llvm-dev
 
     - name: Cache cargo registry
       uses: actions/cache@v2
@@ -77,13 +59,6 @@ jobs:
     - name: Install rust target
       run: |
         rustup target add aarch64-unknown-linux-gnu
-
-    - name: Overwrite cc and ar
-      run: |
-        sudo rm /usr/bin/cc
-        sudo rm /usr/bin/ar
-        sudo ln -s /usr/bin/aarch64-linux-gnu-gcc /usr/bin/cc
-        sudo ln -s /usr/bin/aarch64-linux-gnu-gcc-ar /usr/bin/ar
 
     - name: Build server
       env:
