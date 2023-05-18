@@ -73,7 +73,7 @@ jobs:
               -DBUILD_opencv_python=OFF -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib-4.x/modules \
               ../opencv-4.x
               
-              sudo make -j8 && sudo make install
+              sudo make -j8
             fi
       
       - save_cache:
@@ -81,6 +81,12 @@ jobs:
           paths:
             - ./.build-opencv
           key: opencv
+      
+      - run:
+          name: "Install opencv"
+          command: |
+            cd ./.build-opencv/opencv-4.x
+            sudo make install
       
       - run:
           name: "Install Rust"
