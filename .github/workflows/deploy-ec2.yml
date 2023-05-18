@@ -51,7 +51,7 @@ jobs:
 
     - name: Copy clang
       run: |
-        mv ./clang/clang+llvm-16.0.0-aarch64-linux-gnu /usr/local/llvm
+        sudo mv ./clang/clang+llvm-16.0.0-aarch64-linux-gnu /usr/local/llvm
 
     - name: Cache cargo registry
       uses: actions/cache@v2
