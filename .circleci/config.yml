@@ -147,7 +147,7 @@ jobs:
       - save_cache:
           name: "Cache cargo global build"
           paths:
-            - $CARGO_GLOBAL_INSTALL_DIR
+            - ${$CARGO_GLOBAL_INSTALL_DIR}
           key: cargo-global-build-v1
 
       - save_cache:
@@ -182,7 +182,7 @@ jobs:
             scp -r ./dist $SSH_URI:/home/admin/uma-receipt-generator-web
             ssh -oStrictHostKeyChecking=no $SSH_URI "sudo systemctl start uma-receipt-generator-web.service"
             
-            aws ec2 revoke-security-group-ingress --group-id ${{ env.AWS_EC2_SECURITY_GROUP_ID }} --protocol tcp --port 22 --cidr $RUNNER_IP/32
+            aws ec2 revoke-security-group-ingress --group-id $AWS_EC2_SECURITY_GROUP_ID --protocol tcp --port 22 --cidr $RUNNER_IP/32
 
 # Orchestrate jobs using workflows
 # See: https://circleci.com/docs/configuration-reference/#workflows
