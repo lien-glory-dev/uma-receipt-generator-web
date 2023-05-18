@@ -80,8 +80,8 @@ jobs:
       run: |
         sudo rm /usr/bin/cc
         sudo rm /usr/bin/ar
-        sudo ln -s /usr/bin/cc /usr/bin/aarch64-linux-gnu-gcc
-        sudo ln -s /usr/bin/ar /usr/bin/aarch64-linux-gnu-gcc-ar
+        sudo ln -s /usr/bin/aarch64-linux-gnu-gcc /usr/bin/cc
+        sudo ln -s /usr/bin/aarch64-linux-gnu-gcc-ar /usr/bin/ar
 
     - name: Build server
       env:
