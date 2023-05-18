@@ -117,6 +117,7 @@ jobs:
           name: "Install trunk"
           command: |
             cargo install --locked trunk
+            cargo install --locked wasm-bindgen-cli
 
       - run:
           name: "Build server"
