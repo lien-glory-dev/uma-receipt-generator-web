@@ -72,9 +72,11 @@ jobs:
         key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
         
     - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: stable-aarch64-linux-gnu-gcc
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install rust target
+      run: |
+        rustup target add aarch64-unknown-linux-gnu
 
     - name: Overwrite cc and ar
       run: |
@@ -92,12 +94,12 @@ jobs:
         echo "OPENCV_LINK_LIBS: $OPENCV_LINK_LIBS"
         echo "OPENCV_LINK_PATHS: $OPENCV_LINK_PATHS"
         echo "OPENCV_INCLUDE_PATHS: $OPENCV_INCLUDE_PATHS"
-        cargo build --release --target aarch64-unknown-linux-gnu
+        cargo build --target aarch64-unknown-linux-gnu --release
 
     - name: Build front
       run: |
         wget -qO- https://github.com/thedodd/trunk/releases/download/v0.16.0/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
-        ./trunk build --target ./front/index.html --dist ./dist
+        ./trunk build --release --target ./front/index.html --dist ./dist
     
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
