@@ -73,7 +73,7 @@ jobs:
               -DBUILD_opencv_python=OFF -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib-4.x/modules \
               ../opencv-4.x
               
-              make -j8 && make install
+              sudo make -j8 && sudo make install
             fi
       
       - save_cache:
