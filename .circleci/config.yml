@@ -134,7 +134,7 @@ jobs:
       - run:
           name: "Build front"
           command: |
-            trunk build --release --target ./front/index.html --dist ./dist
+            trunk build --release --dist ./dist ./front/index.html
       
       - save_cache:
           name: "Cache cargo registry"
