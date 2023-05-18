@@ -1,0 +1,125 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/configuration-reference
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@3.1.5
+
+# Define a job to be invoked later in a workflow.
+# See: https://circleci.com/docs/configuration-reference/#jobs
+jobs:
+  build-and-deploy:
+    # Specify the execution environment. You can specify an image from Docker Hub or use one of our convenience images from CircleCI's Developer Hub.
+    # See: https://circleci.com/docs/configuration-reference/#executor-job
+    machine:
+      image: ubuntu-2004:current
+    resource_class: arm.medium
+    # Add steps to the job
+    # See: https://circleci.com/docs/configuration-reference/#steps
+    steps:
+      - checkout
+      
+      - run:
+          name: "Initialize git submodule"
+          command: git submodule update --init
+
+      - run:
+          name: "Configuration environments"
+          command: |
+            echo 'export AWS_DEPLOYER_ROLE_ARN=$AWS_DEPLOYER_ROLE_ARN_PROD' >> $BASH_ENV
+            echo 'export AWS_EC2_SECURITY_GROUP_ID=$AWS_EC2_SECURITY_GROUP_ID_PROD' >> $BASH_ENV
+            echo 'export AWS_EC2_SSH_USER_NAME=$AWS_EC2_SSH_USER_NAME_PROD' >> $BASH_ENV
+            echo 'export AWS_EC2_SSH_HOST_NAME=$AWS_EC2_SSH_HOST_NAME_PROD' >> $BASH_ENV
+            source $BASH_ENV
+      
+      - aws-cli/setup:
+          profile-name: WEB IDENTITY PROFILE
+          role-arn: $AWS_DEPLOYER_ROLE_ARN
+          role-session-name: uma-receipt-generator-deploy-session
+      
+      - run:
+          name: "Install dependencies"
+          command: |
+            sudo apt-get update
+            sudo apt-get -y install build-essential
+            sudo apt-get -y install libopencv-dev clang libclang-dev
+      
+      - run:
+          name: "Install Rust"
+          command: |
+            sudo curl https://sh.rustup.rs -sSf | sh -s -- -y
+      
+      - restore_cache:
+          name: "Restore cargo registry cache"
+          keys: 
+            - cargo-registry-{{ checksum "**/Cargo.lock" }}
+
+      - restore_cache:
+          name: "Restore cargo build cache"
+          keys:
+            - cargo-build-{{ checksum "**/Cargo.lock" }}
+      
+      - restore_cache:
+          name: "Restore cargo index cache"
+          keys:
+            - cargo-index-{{ checksum "**/Cargo.lock" }}
+
+      - run:
+          name: "Build server"
+          environment:
+            OPENCV_LINK_LIBS: "opencv_imgproc,opencv_face,opencv_objdetect,opencv_dnn,opencv_dnn_objdetect,opencv_core,ippiw,ittnotify,ippicv,liblibprotobuf,z"
+            OPENCV_LINK_PATHS: "/opt/opencv/lib,/opt/opencv/lib/opencv4/3rdparty,/usr/lib/x86_64-linux-gnu"
+            OPENCV_INCLUDE_PATHS: "/opt/opencv/include/opencv4"
+          command: |
+            echo "OPENCV_LINK_LIBS: $OPENCV_LINK_LIBS"
+            echo "OPENCV_LINK_PATHS: $OPENCV_LINK_PATHS"
+            echo "OPENCV_INCLUDE_PATHS: $OPENCV_INCLUDE_PATHS"
+            cargo build --release
+
+      - run:
+          name: "Build front"
+          command: |
+            wget -qO- https://github.com/thedodd/trunk/releases/download/v0.16.0/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+            ./trunk build --release --target ./front/index.html --dist ./dist
+      
+      - save_cache:
+          name: "Cache cargo registry"
+          paths:
+            - ~/.cargo/registry
+          key: cargo-registry-{{ checksum "**/Cargo.lock" }}
+      
+      - save_cache:
+          name: "Cache cargo build"
+          paths:
+            - target
+          key: cargo-build-{{ checksum "**/Cargo.lock" }}
+      
+      - save_cache:
+          name: "Cache cargo index"
+          paths:
+            - ~/.cargo/git
+          key: cargo-index-{{ checksum "**/Cargo.lock" }}
+      
+      - run:
+          name: "Deploy to production"
+          command: |
+            echo 'export SSH_URI=$AWS_EC2_SSH_USER_NAME@$AWS_EC2_SSH_HOST_NAME' >> $BASH_ENV
+            echo 'export RUNNER_IP=$(curl -f -s ifconfig.me)' >> $BASH_ENV
+            source $BASH_ENV
+
+            aws ec2 authorize-security-group-ingress --group-id $AWS_EC2_SECURITY_GROUP_ID --protocol tcp --port 22 --cidr $RUNNER_IP/32
+            
+            ssh -oStrictHostKeyChecking=no $SSH_URI "sudo systemctl stop uma-receipt-generator-web.service"
+            scp ./target/release/server $SSH_URI:/home/admin/uma-receipt-generator-web
+            scp -r ./target/release/dist $SSH_URI:/home/admin/uma-receipt-generator-web
+            scp -r ./.env.example $SSH_URI:/home/admin/uma-receipt-generator-web/.env
+            ssh -oStrictHostKeyChecking=no $SSH_URI "sudo systemctl start uma-receipt-generator-web.service"
+            
+            aws ec2 revoke-security-group-ingress --group-id ${{ env.AWS_EC2_SECURITY_GROUP_ID }} --protocol tcp --port 22 --cidr $RUNNER_IP/32
+
+# Orchestrate jobs using workflows
+# See: https://circleci.com/docs/configuration-reference/#workflows
+workflows:
+  deploy-workflow:
+    jobs:
+      - build-and-deploy
