@@ -188,5 +188,7 @@ jobs:
 # See: https://circleci.com/docs/configuration-reference/#workflows
 workflows:
   deploy-workflow:
+    when:
+      equal: [ master, << pipeline.git.branch >> ]
     jobs:
       - build-and-deploy
