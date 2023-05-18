@@ -92,6 +92,10 @@ jobs:
           name: "Install Rust"
           command: |
             sudo curl https://sh.rustup.rs -sSf | sh -s -- -y
+      
+      - run:
+          name: "Add wasm target"
+          command: |
             rustup target add wasm32-unknown-unknown
       
       - restore_cache:
