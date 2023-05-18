@@ -85,6 +85,7 @@ jobs:
         echo "OPENCV_LINK_LIBS: $OPENCV_LINK_LIBS"
         echo "OPENCV_LINK_PATHS: $OPENCV_LINK_PATHS"
         echo "OPENCV_INCLUDE_PATHS: $OPENCV_INCLUDE_PATHS"
+        mv ./.cargo/config.toml ~/.cargo/config.toml
         cargo build --release --target aarch64-unknown-linux-gnu
 
     - name: Build front
