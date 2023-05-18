@@ -85,7 +85,7 @@ jobs:
       - run:
           name: "Install opencv"
           command: |
-            cd ./.build-opencv/opencv-4.x
+            cd ./.build-opencv/build
             sudo make install
       
       - run:
