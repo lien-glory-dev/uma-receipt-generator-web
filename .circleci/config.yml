@@ -42,7 +42,45 @@ jobs:
           command: |
             sudo apt-get update
             sudo apt-get -y install build-essential
-            sudo apt-get -y install libopencv-dev clang libclang-dev
+            sudo apt-get -y install clang libclang-dev
+      
+      - restore_cache:
+          name: "Restore opencv build cache"
+          keys: 
+            - opencv
+      
+      - run:
+          name: "Build opencv"
+          command: |
+            if [ ! -d "./.build-opencv" ]; then
+              mkdir -p ./.build-opencv && cd ./.build-opencv
+
+              wget -O opencv.zip https://github.com/opencv/opencv/archive/4.x.zip
+              wget -O opencv_contrib.zip https://github.com/opencv/opencv_contrib/archive/4.x.zip
+              
+              unzip opencv.zip && rm opencv.zip
+              unzip opencv_contrib.zip && rm opencv_contrib.zip
+              
+              mkdir -p build && cd build
+              
+              echo 'find_program(CMAKE_C_COMPILER NAMES aarch64-linux-gnu-gcc)' >> ../opencv-4.x/platforms/linux/aarch64-gnu.toolchain.cmake
+              echo 'find_program(CMAKE_CXX_COMPILER NAMES aarch64-linux-gnu-g++)' >> ../opencv-4.x/platforms/linux/aarch64-gnu.toolchain.cmake
+              
+              cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=NO \
+              -DCMAKE_TOOLCHAIN_FILE=../opencv-4.x/platforms/linux/aarch64-gnu.toolchain.cmake \
+              -DCMAKE_INSTALL_PREFIX=/opt/opencv -DBUILD_DOCS=OFF -DBUILD_EXAMPLES=OFF \
+              -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_opencv_java=OFF \
+              -DBUILD_opencv_python=OFF -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib-4.x/modules \
+              ../opencv-4.x
+              
+              make -j8 && make install
+            fi
+      
+      - save_cache:
+          name: "Cache opencv"
+          paths:
+            - ./.build-opencv
+          key: opencv
       
       - run:
           name: "Install Rust"
@@ -52,23 +90,23 @@ jobs:
       - restore_cache:
           name: "Restore cargo registry cache"
           keys: 
-            - cargo-registry-{{ checksum "**/Cargo.lock" }}
+            - cargo-registry-{{ checksum "Cargo.lock" }}
 
       - restore_cache:
           name: "Restore cargo build cache"
           keys:
-            - cargo-build-{{ checksum "**/Cargo.lock" }}
+            - cargo-build-{{ checksum "Cargo.lock" }}
       
       - restore_cache:
           name: "Restore cargo index cache"
           keys:
-            - cargo-index-{{ checksum "**/Cargo.lock" }}
+            - cargo-index-{{ checksum "Cargo.lock" }}
 
       - run:
           name: "Build server"
           environment:
             OPENCV_LINK_LIBS: "opencv_imgproc,opencv_face,opencv_objdetect,opencv_dnn,opencv_dnn_objdetect,opencv_core,ippiw,ittnotify,ippicv,liblibprotobuf,z"
-            OPENCV_LINK_PATHS: "/opt/opencv/lib,/opt/opencv/lib/opencv4/3rdparty,/usr/lib/x86_64-linux-gnu"
+            OPENCV_LINK_PATHS: "/opt/opencv/lib,/opt/opencv/lib/opencv4/3rdparty,/usr/lib/aarch64-linux-gnu"
             OPENCV_INCLUDE_PATHS: "/opt/opencv/include/opencv4"
           command: |
             echo "OPENCV_LINK_LIBS: $OPENCV_LINK_LIBS"
@@ -86,19 +124,19 @@ jobs:
           name: "Cache cargo registry"
           paths:
             - ~/.cargo/registry
-          key: cargo-registry-{{ checksum "**/Cargo.lock" }}
+          key: cargo-registry-{{ checksum "Cargo.lock" }}
       
       - save_cache:
           name: "Cache cargo build"
           paths:
             - target
-          key: cargo-build-{{ checksum "**/Cargo.lock" }}
+          key: cargo-build-{{ checksum "Cargo.lock" }}
       
       - save_cache:
           name: "Cache cargo index"
           paths:
             - ~/.cargo/git
-          key: cargo-index-{{ checksum "**/Cargo.lock" }}
+          key: cargo-index-{{ checksum "Cargo.lock" }}
       
       - run:
           name: "Deploy to production"
