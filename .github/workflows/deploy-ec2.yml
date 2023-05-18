@@ -33,7 +33,25 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install crossbuild-essential-arm64
-        sudo apt-get -y install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu llvm-dev
+        sudo apt-get -y install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+    - name: Cache clang
+      id: clang_install_cache
+      uses: actions/cache@v2
+      with:
+        path: ./clang
+        key: clang-installation
+
+    - name: Install clang
+      if: steps.clang_install_cache.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p ./clang && cd ./clang
+        wget -O llvm.tar.xz https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.0/clang+llvm-16.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+        xz -dc llvm.tar.xz | tar xfv -
+
+    - name: Copy clang
+      run: |
+        sudo mv ./clang/clang+llvm-16.0.0-x86_64-linux-gnu-ubuntu-18.04 /usr/local/llvm
 
     - name: Cache cargo registry
       uses: actions/cache@v2
