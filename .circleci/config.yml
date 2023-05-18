@@ -92,6 +92,7 @@ jobs:
           name: "Install Rust"
           command: |
             sudo curl https://sh.rustup.rs -sSf | sh -s -- -y
+            rustup target add wasm32-unknown-unknown
       
       - restore_cache:
           name: "Restore cargo registry cache"
