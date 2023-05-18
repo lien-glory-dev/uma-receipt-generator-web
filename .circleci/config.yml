@@ -100,22 +100,22 @@ jobs:
             rustup target add wasm32-unknown-unknown
 
       - restore_cache:
-          name: "Restore cargo global build cache"
+          name: "Restore cargo global build"
           keys:
             - cargo-global-build-v1
       
       - restore_cache:
-          name: "Restore cargo registry cache"
+          name: "Restore cargo registry"
           keys: 
             - cargo-registry-{{ checksum "Cargo.lock" }}
 
       - restore_cache:
-          name: "Restore cargo build cache"
+          name: "Restore cargo build"
           keys:
             - cargo-build-{{ checksum "Cargo.lock" }}
       
       - restore_cache:
-          name: "Restore cargo index cache"
+          name: "Restore cargo index"
           keys:
             - cargo-index-{{ checksum "Cargo.lock" }}
       
@@ -145,7 +145,7 @@ jobs:
             trunk build --release --dist ./dist ./front/index.html
       
       - save_cache:
-          name: "Cache cargo global build cache"
+          name: "Cache cargo global build"
           paths:
             - $CARGO_GLOBAL_INSTALL_DIR
           key: cargo-global-build-v1
@@ -179,8 +179,7 @@ jobs:
             
             ssh -oStrictHostKeyChecking=no $SSH_URI "sudo systemctl stop uma-receipt-generator-web.service"
             scp ./target/release/server $SSH_URI:/home/admin/uma-receipt-generator-web
-            scp -r ./target/release/dist $SSH_URI:/home/admin/uma-receipt-generator-web
-            scp -r ./.env.example $SSH_URI:/home/admin/uma-receipt-generator-web/.env
+            scp -r ./dist $SSH_URI:/home/admin/uma-receipt-generator-web
             ssh -oStrictHostKeyChecking=no $SSH_URI "sudo systemctl start uma-receipt-generator-web.service"
             
             aws ec2 revoke-security-group-ingress --group-id ${{ env.AWS_EC2_SECURITY_GROUP_ID }} --protocol tcp --port 22 --cidr $RUNNER_IP/32
