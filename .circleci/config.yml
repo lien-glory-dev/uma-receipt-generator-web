@@ -30,6 +30,7 @@ jobs:
             echo 'export AWS_EC2_SECURITY_GROUP_ID=$AWS_EC2_SECURITY_GROUP_ID_PROD' >> $BASH_ENV
             echo 'export AWS_EC2_SSH_USER_NAME=$AWS_EC2_SSH_USER_NAME_PROD' >> $BASH_ENV
             echo 'export AWS_EC2_SSH_HOST_NAME=$AWS_EC2_SSH_HOST_NAME_PROD' >> $BASH_ENV
+            echo 'export CARGO_GLOBAL_INSTALL_DIR=~/cargo-install-target' >> $BASH_ENV
             source $BASH_ENV
       
       - aws-cli/setup:
@@ -97,6 +98,11 @@ jobs:
           name: "Add wasm target"
           command: |
             rustup target add wasm32-unknown-unknown
+
+      - restore_cache:
+          name: "Restore cargo global build cache"
+          keys:
+            - cargo-global-build-v1
       
       - restore_cache:
           name: "Restore cargo registry cache"
@@ -115,6 +121,8 @@ jobs:
       
       - run:
           name: "Install trunk"
+          environment:
+            CARGO_TARGET_DIR: $CARGO_GLOBAL_INSTALL_DIR
           command: |
             cargo install --locked trunk
             cargo install -f --locked wasm-bindgen-cli --version 0.2.85
@@ -136,6 +144,12 @@ jobs:
           command: |
             trunk build --release --dist ./dist ./front/index.html
       
+      - save_cache:
+          name: "Cache cargo global build cache"
+          paths:
+            - $CARGO_GLOBAL_INSTALL_DIR
+          key: cargo-global-build-v1
+
       - save_cache:
           name: "Cache cargo registry"
           paths:
