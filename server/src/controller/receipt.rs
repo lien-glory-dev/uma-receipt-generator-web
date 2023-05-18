@@ -121,6 +121,7 @@ pub async fn insert(
         ImageConfig {
             do_merge_close_button: !trim_close_button,
             header_trim_mode,
+            scaling_threshold_pixels: Some(880000)
         },
     )?;
 
