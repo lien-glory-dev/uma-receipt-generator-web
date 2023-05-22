@@ -15,9 +15,9 @@ use crate::TEMP_UPLOAD_DIRECTORY;
 
 #[derive(Debug, MultipartForm)]
 pub struct CreateReceiptRequest {
-    trim_margin: Text<i32>,
-    trim_close_button: Text<i32>,
-    trim_title: Text<i32>,
+    trim_margin: Option<Text<i32>>,
+    trim_close_button: Option<Text<i32>>,
+    trim_title: Option<Text<i32>>,
     #[multipart(rename = "images[]")]
     images: Vec<TempFile>,
 }
@@ -55,9 +55,9 @@ pub async fn insert(
 ) -> Result<ReceiptCreatedResponse, ApiError> {
     let request_id = uuid::Uuid::new_v4();
 
-    let trim_margin = request.trim_margin.0 != 0;
-    let trim_close_button = request.trim_close_button.0 != 0;
-    let trim_title = request.trim_title.0 != 0;
+    let trim_margin = request.trim_margin.map_or(Default::default(), |i| i.0) != 0;
+    let trim_close_button = request.trim_close_button.map_or(Default::default(), |i| i.0) != 0;
+    let trim_title = request.trim_title.map_or(Default::default(), |i| i.0) != 0;
 
     let dir_path = format!("{}/{}", TEMP_UPLOAD_DIRECTORY, request_id);
     let lock_path = format!("{}/.lock", dir_path);
@@ -121,7 +121,7 @@ pub async fn insert(
         ImageConfig {
             do_merge_close_button: !trim_close_button,
             header_trim_mode,
-            scaling_threshold_pixels: Some(880000)
+            scaling_threshold_pixels: Some(540000)
         },
     )?;
 
