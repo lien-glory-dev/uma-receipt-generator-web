@@ -17,6 +17,7 @@ pub struct Props {
     pub images: Vec<Image>,
     pub loading_count: usize,
     pub on_change: Callback<OrderChangedMessage>,
+    pub disabled: bool,
 }
 
 pub struct ImageSorter;
@@ -39,6 +40,7 @@ impl Component for ImageSorter {
             display: flex;
             width: 100%;
             height: 30rem;
+            margin: 1.6rem 0;
             justify-content: center;
             
             .scroll-container {
@@ -79,6 +81,7 @@ impl Component for ImageSorter {
                             on_click_left={ctx.link().callback(OrderChangedMessage::MoveLeft)}
                             on_click_right={ctx.link().callback(OrderChangedMessage::MoveRight)}
                             on_click_remove={ctx.link().callback(OrderChangedMessage::Remove)}
+                            disabled={ctx.props().disabled}
                         />
                     }) }
                     { for (0..ctx.props().loading_count).map(|index| html! {

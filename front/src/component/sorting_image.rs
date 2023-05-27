@@ -18,6 +18,7 @@ pub struct Props {
     pub on_click_left: Callback<usize>,
     pub on_click_right: Callback<usize>,
     pub on_click_remove: Callback<usize>,
+    pub disabled: bool,
 }
 
 pub struct SortingImage;
@@ -114,19 +115,20 @@ impl Component for SortingImage {
                 <div class={footer_css}>
                     <Button
                         on_click={ctx.link().callback(move |_| OrderChangedMessage::MoveLeft(index))}
-                        disabled={ctx.props().index == 0}
+                        disabled={ctx.props().index == 0 || ctx.props().disabled}
                     >
                         {"←"}
                     </Button>
                     <Button
                         on_click={ctx.link().callback(move |_| OrderChangedMessage::Remove(index))}
                         color={Color::Error}
+                        disabled={ctx.props().disabled}
                     >
                         {"削除"}
                     </Button>
                     <Button
                         on_click={ctx.link().callback(move |_| OrderChangedMessage::MoveRight(index))}
-                        disabled={ctx.props().index >= ctx.props().total_index - 1}
+                        disabled={ctx.props().index >= ctx.props().total_index - 1 || ctx.props().disabled}
                     >
                         {"→"}
                     </Button>

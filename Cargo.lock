@@ -874,6 +874,7 @@ dependencies = [
  "js-sys",
  "reqwest",
  "stylist 0.12.0",
+ "wasm-bindgen",
  "web-sys",
  "yew 0.20.0",
  "yew-router",
