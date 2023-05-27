@@ -1,3 +1,7 @@
+* {
+  box-sizing: border-box;
+}
+
 html,
 body {
   height: 100%;
@@ -5,15 +9,54 @@ body {
 }
 
 body {
+  display:flex;
+  flex-direction:column;
+  min-height: 100vh;
+
+  font-size: 1.2rem;
+  color: #ccc;
   background-color: #222;
-  font-size: 1.5rem;
+
+  @media screen and (max-width: 1024px) {
+    font-size: 1.4rem;
+  }
+
+  @media screen and (max-width: 599px) {
+    font-size: 1.7rem;
+  }
+}
+
+h1 {
+  font-size: 2rem;
 }
 
 main {
+  flex: 1;
+  margin: 1rem 2rem;
+
   color: #ccc;
   font-family: sans-serif;
+}
 
-  margin: 1rem 2rem;
+footer {
+  position: sticky;
+  top: 100vh;
+  width: 100%;
+  padding: .8rem 2rem;
+
+  font-size: 1rem;
+  line-height: 1.2em;
+  text-align: center;
+  color: #000;
+  background-color: #e1e6ff;
+}
+
+div {
+  display: block;
+}
+
+.container {
+  display: block;
 }
 
 main a:link {

@@ -1,34 +1,27 @@
+use stylist::yew::use_style;
 use yew::prelude::*;
 
-pub struct Home {}
+use crate::component::merge_form::MergeForm;
 
-impl Component for Home {
-    type Message = ();
-    type Properties = ();
+#[derive(Properties, PartialEq)]
+pub struct Props {
+    pub title: AttrValue,
+}
 
-    fn create(ctx: &Context<Self>) -> Self {
-        Self {}
-    }
+#[function_component(Home)]
+pub fn home(props: &Props) -> Html {
+    let page_container_css = use_style! {"
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+    "};
 
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
-        false
-    }
-
-    fn view(&self, ctx: &Context<Self>) -> Html {
-        html! {
-            <div class="container page">
-                <h1>{"因子結合くん"}</h1>
-                <form action="/receipts" method="post" enctype="multipart/form-data">
-                    <input type="checkbox" name="trim_margin" id="trim_margin" class="form-control" value="1"/>
-                    <label for="trim_margin">{"余白を取り除く"}</label>
-                    <input type="checkbox" name="trim_close_button" id="trim_close_button" class="form-control" value="1"/>
-                    <label for="trim_close_button">{"「閉じる」ボタンを取り除く"}</label>
-                    <input type="checkbox" name="trim_title" id="trim_title" class="form-control" value="1"/>
-                    <label for="trim_title">{"「ウマ娘詳細」ヘッダーを取り除く"}</label>
-                    <input type="file" multiple=true name="images[]"/>
-                    <button type="submit">{"つなげる"}</button>
-                </form>
+    html! {
+        <div class={page_container_css}>
+            <div class="container title">
+                <h1>{&props.title}</h1>
             </div>
-        }
+            <MergeForm />
+        </div>
     }
 }
