@@ -113,19 +113,19 @@ impl Component for SortingImage {
                 </div>
                 <div class={footer_css}>
                     <Button
-                        onclick={ctx.link().callback(move |_| OrderChangedMessage::MoveLeft(index))}
+                        on_click={ctx.link().callback(move |_| OrderChangedMessage::MoveLeft(index))}
                         disabled={ctx.props().index == 0}
                     >
                         {"←"}
                     </Button>
                     <Button
-                        onclick={ctx.link().callback(move |_| OrderChangedMessage::Remove(index))}
+                        on_click={ctx.link().callback(move |_| OrderChangedMessage::Remove(index))}
                         color={Color::Error}
                     >
                         {"削除"}
                     </Button>
                     <Button
-                        onclick={ctx.link().callback(move |_| OrderChangedMessage::MoveRight(index))}
+                        on_click={ctx.link().callback(move |_| OrderChangedMessage::MoveRight(index))}
                         disabled={ctx.props().index >= ctx.props().total_index - 1}
                     >
                         {"→"}

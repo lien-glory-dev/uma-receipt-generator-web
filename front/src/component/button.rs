@@ -13,7 +13,7 @@ pub enum Color {
 pub struct Props {
     pub children: Children,
     #[prop_or_default]
-    pub onclick: Callback<MouseEvent>,
+    pub on_click: Callback<MouseEvent>,
     #[prop_or_default]
     pub disabled: bool,
     #[prop_or_default]
@@ -44,7 +44,7 @@ pub fn button(props: &Props) -> Html {
     };
     
     html! {
-        <button class={classes!(button_css.clone(), props.color.get_color_style(), props.class.clone())} onclick={&props.onclick} disabled={props.disabled}>
+        <button class={classes!(button_css.clone(), props.color.get_color_style(), props.class.clone())} onclick={&props.on_click} disabled={props.disabled}>
             { for props.children.iter() }
         </button>
     }
