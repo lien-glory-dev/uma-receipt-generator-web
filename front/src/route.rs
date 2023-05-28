@@ -16,7 +16,7 @@ pub enum Route {
 
 pub fn switch(route: Route) -> Html {
     match route {
-        Route::Home => html! { <Home title="ウマウマがっちゃんこ" /> },
+        Route::Home => html! { <Home /> },
         Route::NotFound => html! { <>{"NotFound"}</> },
     }
 }
