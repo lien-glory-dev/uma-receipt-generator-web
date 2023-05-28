@@ -7,7 +7,7 @@ pub fn footer() -> Html {
         p {
         }
     "};
-    
+
     html! {
         <div class={container_css}>
             <p>{"© 2023 リヤングローリー All rights reserved."}</p>

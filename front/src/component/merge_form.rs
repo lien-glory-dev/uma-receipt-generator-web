@@ -1,4 +1,7 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::ops::Deref;
+use std::rc::Rc;
 
 use anyhow::anyhow;
 use base64::engine::general_purpose::STANDARD;
@@ -6,7 +9,6 @@ use base64::Engine;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::multipart::Part;
 use stylist::css;
-use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
@@ -17,7 +19,8 @@ use crate::component::image_sorter::*;
 pub enum Msg {
     AddImage(Image),
     ImageLoading(usize),
-    ImageOrderChanged(OrderChangedMessage),
+    ImageChanged(OrderChangedMessage),
+    RemoveAllImage,
     ImageMerged(anyhow::Result<Image>),
     MergeImage,
     InputChanged(HtmlInputElement),
@@ -39,7 +42,7 @@ impl Component for MergeForm {
     type Message = Msg;
     type Properties = ();
 
-    fn create(ctx: &Context<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self {
             images: Vec::new(),
             loading_count: 0,
@@ -61,7 +64,7 @@ impl Component for MergeForm {
                 self.loading_count += count;
                 true
             }
-            Msg::ImageOrderChanged(msg) => match msg {
+            Msg::ImageChanged(msg) => match msg {
                 OrderChangedMessage::MoveLeft(i) => {
                     self.images.swap(i, i - 1);
                     true
@@ -75,15 +78,19 @@ impl Component for MergeForm {
                     true
                 }
             },
+            Msg::RemoveAllImage => {
+                self.images.clear();
+                true
+            }
             Msg::MergeImage => {
                 ctx.link().send_message(Msg::BeginResultLoading);
-                
+
                 let form = {
                     let f = self
                         .images
                         .iter()
                         .fold(reqwest::multipart::Form::new(), |f, image| {
-                            let part = Part::bytes(image.bytes.clone())
+                            let part = Part::bytes(image.bytes.borrow().clone())
                                 .mime_str(image.mime_type.as_str())
                                 .expect("Failed to set mime type");
                             f.part("images[]", part)
@@ -126,7 +133,7 @@ impl Component for MergeForm {
                                     name: "".to_string(),
                                     mime_type: content_type,
                                     size: bytes.len() as u64,
-                                    bytes: bytes.to_vec(),
+                                    bytes: Rc::new(RefCell::new(bytes.to_vec())),
                                 })
                             }
                             .await
@@ -136,7 +143,7 @@ impl Component for MergeForm {
 
                     Msg::ImageMerged(result)
                 });
-                false
+                true
             }
             Msg::ImageMerged(i) => {
                 match i {
@@ -150,21 +157,17 @@ impl Component for MergeForm {
                             .expect("Failed to alert");
                     }
                 }
-                
+
                 ctx.link().send_message(Msg::EndedResultLoading);
-                
+
                 true
             }
             Msg::InputChanged(e) => {
                 self.check_options.insert(e.name(), e.checked());
-                false
+                true
             }
             Msg::ElementChanged(e) => {
-                let input = e
-                    .target()
-                    .unwrap()
-                    .dyn_into::<HtmlInputElement>()
-                    .expect("It should input element");
+                let input = e.target_dyn_into().expect("It should input element");
                 ctx.link().send_message(Msg::InputChanged(input));
                 true
             }
@@ -182,7 +185,6 @@ impl Component for MergeForm {
     fn view(&self, ctx: &Context<Self>) -> Html {
         let options_container_css = css! {"
             max-width: 25em;
-            padding: 1.2rem;
             margin: 1.6rem auto;
             border-color: #666;
             border-width: 1px;
@@ -191,8 +193,18 @@ impl Component for MergeForm {
             text-align: left;
             
             h1 {
-                font-size: 1.2rem;
+                margin: 0;
+                border-bottom-style: dashed;
+                border-color: #555;
+                border-width: 0.13rem;
+                font-size: 1rem;
+                text-align: center;
+                padding: .8rem 0;
             }
+        "};
+
+        let options_group_container = css! {"
+            padding: 1.2rem;
         "};
 
         let options_group_css = css! {"
@@ -211,9 +223,9 @@ impl Component for MergeForm {
 
         let options_item_css = css! {"
             font-size: 1rem;
-            line-height: 1.8em;
+            line-height: 2.2em;
         "};
-        
+
         let button_container_css = css! {"
             margin: 1.6rem auto;
         "};
@@ -240,24 +252,9 @@ impl Component for MergeForm {
                 <ImageSorter
                     images={self.images.clone()}
                     loading_count={self.loading_count}
-                    on_change={ctx.link().callback(Msg::ImageOrderChanged)}
+                    on_change={ctx.link().callback(Msg::ImageChanged)}
                     disabled={self.is_loading_result}
                 />
-                <div class={options_container_css}>
-                    <h1>{"オプション"}</h1>
-                    <div class={options_group_css.clone()}>
-                        <label for="trim_margin" class={options_item_css.clone()}>{"余白を取り除く"}</label>
-                        <input type="checkbox" name="trim_margin" id="trim_margin" class={options_item_css.clone()} onchange={ctx.link().callback(Msg::ElementChanged)} />
-                    </div>
-                    <div class={options_group_css.clone()}>
-                        <label for="trim_close_button" class={options_item_css.clone()}>{"「閉じる」ボタンを取り除く"}</label>
-                        <input type="checkbox" name="trim_close_button" id="trim_close_button" class={options_item_css.clone()} onchange={ctx.link().callback(Msg::ElementChanged)} />
-                    </div>
-                    <div class={options_group_css.clone()}>
-                        <label for="trim_title" class={options_item_css.clone()}>{"「ウマ娘詳細」ヘッダーを取り除く"}</label>
-                        <input type="checkbox" name="trim_title" id="trim_title" class={options_item_css.clone()} onchange={ctx.link().callback(Msg::ElementChanged)} />
-                    </div>
-                </div>
                 <div class={button_container_css}>
                     <Button
                         on_click={ctx.link().callback(|_| Msg::MergeImage)}
@@ -266,11 +263,35 @@ impl Component for MergeForm {
                     >
                         {"つなげる"}
                     </Button>
+                    <Button
+                        on_click={ctx.link().callback(|_| Msg::RemoveAllImage)}
+                        color={Color::Error}
+                        disabled={self.is_loading_result}
+                    >
+                        {"クリア"}
+                    </Button>
+                </div>
+                <div class={options_container_css}>
+                    <h1>{"オプション"}</h1>
+                    <div class={options_group_container}>
+                        <div class={options_group_css.clone()}>
+                            <label for="trim_margin" class={options_item_css.clone()}>{"余白を取り除く"}</label>
+                            <input type="checkbox" name="trim_margin" id="trim_margin" class={options_item_css.clone()} onchange={ctx.link().callback(Msg::ElementChanged)} />
+                        </div>
+                        <div class={options_group_css.clone()}>
+                            <label for="trim_close_button" class={options_item_css.clone()}>{"閉じるボタンを取り除く"}</label>
+                            <input type="checkbox" name="trim_close_button" id="trim_close_button" class={options_item_css.clone()} onchange={ctx.link().callback(Msg::ElementChanged)} />
+                        </div>
+                        <div class={options_group_css.clone()}>
+                            <label for="trim_title" class={options_item_css.clone()}>{"\"ウマ娘詳細\"ヘッダーを取り除く"}</label>
+                            <input type="checkbox" name="trim_title" id="trim_title" class={options_item_css.clone()} onchange={ctx.link().callback(Msg::ElementChanged)} />
+                        </div>
+                    </div>
                 </div>
                 if !self.is_loading_result {
                     if let Some(result_image) = &self.result_image {
                         <div class={result_image_container_css}>
-                            <img src={format!("data:{};base64,{}", result_image.mime_type, STANDARD.encode(&result_image.bytes))} />
+                            <img src={format!("data:{};base64,{}", result_image.mime_type, STANDARD.encode(result_image.bytes.borrow().deref()))} />
                         </div>
                     }
                 } else {
@@ -287,6 +308,4 @@ impl Component for MergeForm {
     }
 }
 
-impl MergeForm {
-
-}
+impl MergeForm {}

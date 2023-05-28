@@ -1,10 +1,8 @@
-use stylist::css;
-use stylist::yew::{Global, use_style};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::route::{switch, Route};
 use crate::component::footer::Footer;
+use crate::route::{switch, Route};
 
 #[function_component(App)]
 pub fn app() -> Html {

@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use stylist::css;
 use yew::prelude::*;
 
@@ -26,7 +24,7 @@ impl Component for ImageSorter {
     type Message = OrderChangedMessage;
     type Properties = Props;
 
-    fn create(ctx: &Context<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self
     }
 
@@ -51,7 +49,7 @@ impl Component for ImageSorter {
                 overflow-y: hidden;
             }
         "};
-        
+
         let loading_container_css = css! {"
             display: flex;
             flex-direction: column;
@@ -84,7 +82,7 @@ impl Component for ImageSorter {
                             disabled={ctx.props().disabled}
                         />
                     }) }
-                    { for (0..ctx.props().loading_count).map(|index| html! {
+                    { for (0..ctx.props().loading_count).map(|_| html! {
                         <div class={loading_container_css.clone()}>
                             <p>{"よみこみちう..."}</p>
                         </div>

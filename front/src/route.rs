@@ -1,9 +1,9 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-pub mod home;
-
 use home::Home;
+
+pub mod home;
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum Route {
@@ -11,7 +11,7 @@ pub enum Route {
     Home,
     #[not_found]
     #[at("/404")]
-    NotFound
+    NotFound,
 }
 
 pub fn switch(route: Route) -> Html {

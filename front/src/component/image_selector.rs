@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::cell::RefCell;
+use std::rc::Rc;
 
-use gloo::file::callbacks::FileReader;
 use gloo::file::File;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
@@ -10,27 +10,27 @@ pub struct Props {
     pub on_change: Callback<Image>,
     #[prop_or_default]
     pub on_loading: Callback<usize>,
+    #[prop_or_default]
+    pub on_failed: Callback<()>,
 }
 
 pub enum Msg {
     FileReady(Image),
     ImagesSelected(Vec<File>),
-    FilesSelectionFailed,
+    FileLoadError,
 }
 
 pub struct ImageSelector {
     files_value: AttrValue,
-    readers: HashMap<String, FileReader>,
 }
 
 impl Component for ImageSelector {
     type Message = Msg;
     type Properties = Props;
 
-    fn create(_: &Context<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self {
             files_value: Default::default(),
-            readers: HashMap::new(),
         }
     }
 
@@ -39,43 +39,43 @@ impl Component for ImageSelector {
 
         match msg {
             Msg::FileReady(image) => {
-                self.readers.remove(image.name.as_str());
                 ctx.props().on_change.emit(image);
                 true
             }
             Msg::ImagesSelected(images) => {
+                ctx.props().on_loading.emit(images.len());
+
                 for file in images.into_iter() {
                     let file_name = file.name();
                     let file_byte_size = file.size();
                     let file_type = file.raw_mime_type();
 
-                    let task = {
-                        let link = ctx.link().clone();
-                        let file_name = file_name.clone();
-                        
-                        gloo::file::callbacks::read_as_bytes(&file, move |res| {
-                            link.send_message(Msg::FileReady(Image {
+                    ctx.link().send_future(async move {
+                        let bytes = gloo::file::futures::read_as_bytes(&file).await;
+
+                        match bytes {
+                            Ok(bytes) => Msg::FileReady(Image {
                                 name: file_name,
                                 mime_type: file_type,
                                 size: file_byte_size,
-                                bytes: res.expect("Failed to read file"),
-                            }))
-                        })
-                    };
-                    self.readers.insert(file_name, task);
+                                bytes: Rc::new(RefCell::new(bytes)),
+                            }),
+                            Err(_) => Msg::FileLoadError,
+                        }
+                    });
                 }
-                
+
                 self.files_value = "".into();
-                
-                ctx.props().on_loading.emit(self.readers.len());
+
                 true
             }
-            Msg::FilesSelectionFailed => {
+            Msg::FileLoadError => {
                 window
                     .alert_with_message("ファイルの読み込みに失敗しました。")
                     .expect("Failed to alert");
 
-                false
+                ctx.props().on_failed.emit(());
+                true
             }
         }
     }
@@ -97,15 +97,7 @@ impl Component for ImageSelector {
 
 impl ImageSelector {
     fn on_change(e: Event) -> Msg {
-        let input: HtmlInputElement = {
-            let r = e.target_dyn_into::<HtmlInputElement>();
-
-            if r.is_none() {
-                return Msg::FilesSelectionFailed;
-            }
-
-            r.unwrap()
-        };
+        let input: HtmlInputElement = e.target_dyn_into().expect("It should input element");
 
         let mut result_files = Vec::new();
 
@@ -136,5 +128,5 @@ pub struct Image {
     pub name: String,
     pub mime_type: String,
     pub size: u64,
-    pub bytes: Vec<u8>,
+    pub bytes: Rc<RefCell<Vec<u8>>>,
 }

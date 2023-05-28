@@ -11,7 +11,7 @@ pub fn home() -> Html {
         margin-right: auto;
         text-align: center;
     "};
-    
+
     let title = document().title();
 
     html! {
